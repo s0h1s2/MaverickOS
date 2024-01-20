@@ -2,7 +2,7 @@ print_str:
   pusha
   mov ah,0x0e
 .char_loop:
-   lodsb
+   lodsb ; mov al,[si]
    cmp al,0
    je .end
    int 0x10

@@ -1,5 +1,11 @@
 [ORG 0x7E00]
 jmp stage2 
+struc UpperMemEntry
+    .base_addr:resq 1
+    .length:resq 1
+    .type:resd 1 
+    .acpi_null:resd 1 
+endstruc
 ; Fast A20 
 enable_a20:
   pusha 
@@ -43,9 +49,7 @@ check_a20:
  
     mov ax, 0
     je .exit
- 
     mov ax, 1
- 
 .exit:
     pop si
     pop di
@@ -66,14 +70,17 @@ stage2:
   mov si,a20_on_msg 
   call print_str
 .end:
+.success:
+  mov si,success
+  call print_str
   jmp $
 
 %include "print.s"
 msg db "Stage2!",0xa,0xd,0
 a20_on_msg db "A20 is on",0xa,0xd,0
+success db "upper memory",0xa,0xd,0
 
-mem_size dw 0x0000
-
+; mem_size dw 0x0000
 
 times 1024-($-$$) db 0 
 
