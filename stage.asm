@@ -6,20 +6,57 @@ section .text
 __start:
 	push	bp
 	mov	bp, sp
-	;sub	sp,          0
+	 sub	sp,          4
 mov ax,0
 mov es,ax
 mov ds,ax
 mov ah,0x0e
-mov al,97
-int 0x10
-; for
+; loc     c : (@-2) : * char
+
+section .rodata
 L3:
+	db	"example"
+	times	1 db 0
+
+section .text
+; RPN'ized expression: "c L3 = "
+; Expanded expression: "(@-2) L3 =(2) "
+; Fused expression:    "=(170) *(@-2) L3 "
+	mov	ax, L3
+	mov	[bp-2], ax
+; for
+; loc     i : (@-4) : int
+; RPN'ized expression: "i 0 = "
+; Expanded expression: "(@-4) 0 =(2) "
+; Fused expression:    "=(170) *(@-4) 0 "
+	mov	ax, 0
+	mov	[bp-4], ax
+L4:
+; RPN'ized expression: "i 7 < "
+; Expanded expression: "(@-4) *(2) 7 < "
+; Fused expression:    "< *(@-4) 7 IF! "
+	mov	ax, [bp-4]
+	cmp	ax, 7
+	jge	L7
+; RPN'ized expression: "i ++p "
+; Expanded expression: "(@-4) ++p(2) "
+; {
+mov al,c[i]
+int 0x10
+; }
+L5:
+; Fused expression:    "++p(2) *(@-4) "
+	mov	ax, [bp-4]
+	inc	word [bp-4]
+	jmp	L4
+L7:
+; for
+L8:
 ; {
 hlt
 ; }
-	jmp	L3
-L6:
+	jmp	L8
+L11:
 L1:
 	leave
 	ret
@@ -55,5 +92,5 @@ L1:
 ; Ident _start
 ; Bytes used: 131/5632
 
-; Next label number: 7
+; Next label number: 12
 ; Compilation succeeded.
