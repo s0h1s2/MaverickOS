@@ -1,7 +1,17 @@
-void init_asm(void);
-#pragma aux init_asm = "xor ax,ax"\
-                       "mov ds,ax"\
-                       "mov es,ax"\
-                       "mov ss,ax"\
-                       modify[AX];
-void init(){init_asm(); }
+#pragma aux default ""
+extern void __cdecl putc(char c);
+void puts(char *s);
+void bootloader_main(void){
+                       putc('h');
+                       puts("Hello");
+                       loop:
+                                              goto loop;
+}
+void puts(char *s){
+                       while (*s!='\0') {
+                       putc(*s);
+                          s++;
+                       }
+}
+
+

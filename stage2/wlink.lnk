@@ -1,0 +1,5 @@
+OPTION NODEFAULTLIBS,
+       START=init_sys,
+       VERBOSE,
+       STACK=0x200
+
