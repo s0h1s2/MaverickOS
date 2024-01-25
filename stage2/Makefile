@@ -1,7 +1,11 @@
+ASM:=nasm
+ASM_FLAGS:=-f elf32
+OBJ_FILES:=$(wildcard *.o)
+ASM_FILES:=$(wildcard *.s)
+LINKER:=ld 
+
 stage2:
-	wcc -2 -d0 -wx -ms -s -zl main.c
-	nasm  -f obj x86.asm -o x86.o 
-	wlink FORMAT RAW BIN NAME stage2.bin FILE {main.o x86.o} OPTION OFFSET=0x7E00
-
-
+	$(ASM) $(ASM_FLAGS) $(ASM_FILES)
+	$(LINKER) -m elf_i386 -nostdlib -T script.ld $(OBJ_FILES) -o stage2.elf
+	objcopy -O binary stage2.elf stage2.bin
 
