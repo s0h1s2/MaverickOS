@@ -2,9 +2,7 @@ bits 16
 global init_sys
 section .text
 init_sys:
-    ;mov ax,0x7e00
     xor ax,ax
-
     mov es,ax
     mov ds,ax
     mov bx,0x8000
@@ -18,7 +16,7 @@ init_sys:
     jmp $
 
 
-section .data
+
 msg db "Hello",0
 
-%include "../print.s"
+%include "../common/print.s"
