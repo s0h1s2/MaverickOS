@@ -1,3 +1,4 @@
+section .text
 print_str:
   pusha
   mov ah,0x0e

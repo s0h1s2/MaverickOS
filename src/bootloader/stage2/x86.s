@@ -20,8 +20,12 @@ check_a20_gate:
     call check_a20
     cmp ax,1
     jne end
-    mov si,a20_enabled_msg 
-    call print_str
+    call install_gdt
+    mov eax,cr0
+    or eax,1
+    mov cr0,eax
+    jmp 0x8:protected_mode
+
 end:
     jmp $
 ;===========================================================
@@ -85,18 +89,14 @@ enable_a20:
    pop ax
    ret
 
-[bits 32]
-switch_to_pm:
-    sti 
-    lgdt [toc]
+install_gdt:
+    pusha
     cli
-    ;; Enable 32 bit mode.
-    mov eax,cr0
-    or eax,1
-    mov cr0,eax
-    jmp 0x8:protected_mode
+    lgdt [toc]
+    popa
+    ret
 
-
+[bits 32]
 protected_mode:
     mov ax,0x10 ; 0x10 becuase of data semgment in GDT is second entry
     mov ds,ax
@@ -109,6 +109,29 @@ protected_mode:
 section .data
 msg db "Stage 2 Loaded",0xA,0xD,0
 a20_enabled_msg db "A20 enabled",0xA,0xD,0
+gdt_start:
+;; null descriptor
+	dd 0
+	dd 0
+;; code descriptor
+	dw 0xFFFF ;Base limit 
+	dw 0
+	db 0
+	db 10011010b 			; access
+	db 11001111b 			; granularity
+	db 0
+
+;; data descriptor
+	dw 0xFFFF
+	dw 0x0
+	db 0
+	db 10010010b
+	db 11001111b
+	db 0
+gdt_end:
+toc: ;; Table of content
+	dw gdt_end-gdt_start-1 ; GDT table size in this case is 3*8=24-1 bytes.
+	dd gdt_start 					 ; 4 byte pointer.
 
 %include "../common/print.s"
-%include "gdt.asm.inc"
+;%include "gdt.asm.inc"
