@@ -1,5 +1,8 @@
 [ORG 0x7c00]
 jmp start
+; TODO:This procedure load 2 sectors only
+; TODO:I might need a file system or load more sectors for the second stage.
+
 read_stage2_into_memory:
     ;pusha 
     ; Buffer to read.
