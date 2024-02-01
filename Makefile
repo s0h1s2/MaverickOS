@@ -13,8 +13,7 @@ prebuild:
 	mkdir -p $(BUILD_DIR)
 mavrick: prebuild stage1 stage2
 	dd if=/dev/zero of=disk.img bs=1024 count=1440
-	dd if=$(BUILD_DIR)/bootloader.bin of=disk.img conv=notrunc
-	dd if=$(BUILD_DIR)/stage2.bin of=disk.img conv=notrunc bs=512 seek=1 conv=notrunc
+	mkfs.vfat -F12 disk.img
 
 stage1:
 	$(MAKE) -C $(SRC_DIR)/bootloader/stage1 BUILD_DIR="$(BUILD_DIR)"

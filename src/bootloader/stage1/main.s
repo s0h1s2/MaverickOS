@@ -34,9 +34,11 @@ bs_volume_label: 	        db "Mavrick    "
 bs_file_system: 	        db "fat12   "
 
 start:
+    cli 
     xor ax,ax 
     mov es,ax
     mov ds,ax
+    sti
     mov si,msg
     call print_str
     xor dx,dx
@@ -52,28 +54,68 @@ start:
     ; Calculate the offset to reach the start of root entries sector.
     ; 9 sectors * 2 fats + 1 reserved=19 sectors.
     mov al,[bpb_number_of_fats]
-    mul [bpb_sectors_per_fat]
+    mul WORD [bpb_sectors_per_fat]
     add ax,[bpb_reserved_sectors]
     ; AX contain 19 sectors.
-    mov word [sectors_to_read],ax
-    add word [sectors_to_read],cx
+    mov word [data_sector],ax
+    add word [data_sector],cx
     ; 15+19=34 sectors.
     ; Load sectors into 7C00:0x0200
     mov bx,0x0200
     call read_sectors
     jmp $
+
+; TODO: handling errors might be a good idea.
+;=====================
+; CX contain number of sectors to read.
+; AX is offset sector.
+; ES:BX are Buffer to write into memory.
+;=====================
 read_sectors:
+.main:
     push ax
-    push dx
-    mov dl,[bs_drive_number] ; Drive number in this case is floppy
-    mov ah,0x2               ; AH contain 0x2 to read sector functionality.
-    mov al,
-    pop dx
+    push bx
+    push cx
+    call lbachs
+    mov ah,0x02 ; BIOS function to read sector into memory
+    mov al,0x1  ; Read one sector at a time.
+    mov ch,[absolute_track]
+    mov cl,[absolute_sector]
+    mov dh,[absolute_head]
+    mov dl,[bs_drive_number] ; Drive number in this case it is a floppy.
+    int 0x13
+.success:
+    pop cx
+    pop bx
     pop ax
+    add bx,WORD [bpb_bytes_per_sector]
+    inc ax
+    loop .main ; Dec cx by 1
+    ret
+;==============
+; AX is argument for lba value
+;==============
+lbachs:
+    push dx
+    xor dx,dx
+    div WORD [bpb_sectors_per_track]
+    inc dl
+    mov BYTE [absolute_sector],dl
+    xor dx,dx
+    div WORD [bpb_heads_per_cylinder]
+    mov BYTE [absolute_head],dl
+    mov BYTE [absolute_track],dl
+    pop dx
     ret
 
+
+; Variables And Messages.
 msg db 'Stage 1',0xa,0xd,0
-data_sector dw 0x0000
+data_sector         dw 0x0000
+absolute_sector     db 0x00
+absolute_head       db 0x00
+absolute_track      db 0x00
+
 disk_error_msg db 'Unable to read disk',0xa,0xd,0
 %include "print.s"
 times 510-($-$$) db 0 ; 2 bytes less now
