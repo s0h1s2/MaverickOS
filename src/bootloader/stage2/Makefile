@@ -3,7 +3,7 @@ ASM_FLAGS:=-f elf32
 LINKER:=ld 
 LINKER_FLAGS:=-m elf_i386 -nostdlib -T script.ld -L $(BUILD_DIR)
 CC:=clang
-CCFLAGS:= --target=i386-pc-none-elf -ffreestanding -nostdlib -c -I include/
+CCFLAGS:= -Wall -Wextra --target=i386-pc-none-elf -inline-asm=intel -ffreestanding -nostdlib -c -I include/ -mno-red-zone -fno-builtin 
 SRCS := $(shell find . -name '*.c' -or -name '*.s')
 OBJS:=$(SRCS:%=$(BUILD_DIR)/%.o)
 
