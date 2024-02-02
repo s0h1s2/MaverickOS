@@ -13,7 +13,7 @@ nop
 ; |
 ; |---> This file in the disk.
 ;==================================
-
+oem_id:                     db "Mavricko"
 bpb_bytes_per_sector:  	    dw 512
 bpb_sectors_per_cluster: 	db 1
 bpb_reserved_sectors: 	    dw 1
@@ -30,7 +30,7 @@ bs_drive_number: 	        db 0
 bs_unused: 	                db 0
 bs_ext_boot_signature: 	    db 0x29
 bs_serial_number:	        dd 0xa0a1a2a3
-bs_volume_label: 	        db "Mavrick    "
+bs_volume_label: 	        db "Mavrick"
 bs_file_system: 	        db "fat12   "
 
 start:
@@ -60,10 +60,58 @@ start:
     mov word [data_sector],ax
     add word [data_sector],cx
     ; 15+19=34 sectors.
-    ; Load sectors into 7C00:0x0200
-    mov bx,0x0200
+    ; Load sectors into 0x0500:0x0000
+    push es
+    push ax
+    mov ax,root_entries_base 
+    mov es,ax
+    pop ax
+    mov bx,root_entries_offset
+    ; Load root entries sectors.
     call read_sectors
+    pop es
+
+    call find_stage2
+
+    ; mov dx,[absolute_head]
+    ; call print_hex
+    ;mov dx,[absolute_track]
+    ; call print_hex
+
+
+    ;mov si,msg
+    ;call print_str
+        
     jmp $
+
+find_stage2:
+    push cx
+    push es
+    push ax
+    mov ax,root_entries_base
+    mov es,ax
+    mov cx,[bpb_root_entries] ; No of entries.
+    mov di,root_entries_offset
+    .locate_image:
+        push cx
+        mov cx,11
+        mov si,stage2_image_name
+        push di
+        rep cmpsb
+        pop di
+        je .exit 
+        pop cx
+        add di,32  ; Goto next entry
+        loop .locate_image ; Decrease CX by 1
+    .failure:
+        mov si,image_not_found
+        call print_str
+    .exit:
+        pop ax
+        pop es
+        pop cx
+        ret
+
 
 ; TODO: handling errors might be a good idea.
 ;=====================
@@ -88,7 +136,7 @@ read_sectors:
     pop cx
     pop bx
     pop ax
-    add bx,WORD [bpb_bytes_per_sector]
+    add bx,WORD [bpb_bytes_per_sector] ;Queue next buffer.
     inc ax
     loop .main ; Dec cx by 1
     ret
@@ -104,7 +152,7 @@ lbachs:
     xor dx,dx
     div WORD [bpb_heads_per_cylinder]
     mov BYTE [absolute_head],dl
-    mov BYTE [absolute_track],dl
+    mov BYTE [absolute_track],al
     pop dx
     ret
 
@@ -112,12 +160,21 @@ lbachs:
 ; Variables And Messages.
 msg db 'Stage 1',0xa,0xd,0
 data_sector         dw 0x0000
+
 absolute_sector     db 0x00
 absolute_head       db 0x00
 absolute_track      db 0x00
 
+stage2_image_name   db "stage2.bin",0
 disk_error_msg db 'Unable to read disk',0xa,0xd,0
+image_not_found db 'stage2 not found',0xa,0xd,0
+
 %include "print.s"
+
+root_entries_base equ 0x0500
+root_entries_offset equ 0x0000
+
+
 times 510-($-$$) db 0 ; 2 bytes less now
 db 0x55
 db 0xAA
