@@ -38,5 +38,5 @@ print_hex:
   popa
   ret
 
-HEX_OUT db '0x0000',0
+HEX_OUT db '0x0000',0xD,0xA,0
 
