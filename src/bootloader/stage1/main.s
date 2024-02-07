@@ -1,3 +1,4 @@
+%define CLRF 0xA,0xD
 ; Future idea:
 ; I think i can assign values to macros then use them in BPB below.
 ; %define x 512
@@ -49,18 +50,22 @@ start:
     mov dl,[drive_number]
     int 0x13
     jc .fl_not_support
+    ; Caution: this code doesn't bring fat table into memory yet.
     ; Calculate offset between bootloader and ROOT dir in sectors.
     xor ax,ax
     mov al,[FAT_count] 
     mul word [sectors_per_FAT]
     add ax,[reserve_count]
     mov [disk_packet.lba1],ax
+    mov [data_region],ax
     ; Calculate how many sectors to read.
     mov ax,32 ; Each root entry is 32 byte.
     xor dx,dx
     mul word [dir_entries] ; 32 * dir_entries
     div word [bytes_per_sector]; 32 * dir_entries/bytes_per_sector=?
     mov [disk_packet.sectors_to_read],ax
+    add [data_region],ax
+
     mov si,disk_packet
     call read_disk_lba
     jc .cant_read_disk
@@ -68,7 +73,7 @@ start:
     mov es,ax
     mov di,root_offset
     
-    mov cx,2
+    mov cx,[dir_entries]
     .my_loop:
         mov si,stage2_name
         push di
@@ -76,30 +81,22 @@ start:
         mov cx,11
         .name_lookup:
             repe cmpsb
-            jz .load_root
         pop cx
         pop di
+        jz .load_root
         add di,32
         loop .my_loop
+        
         jmp .stage2_not_found
         jmp end
-    ; call read_fat_table
-    ; ;mov si,0x200
-    ; mov si,disk_size_msg
-    ; call print_str
-    ; mov dx,disk_packet_size
-    ; call print_hex
-    ; mov ax,0x0500
-    ; mov es,ax
-    ; mov di,0x0000
-    ; add di,32
-    ;
-    ; mov dx,[es:di]
-    ; call print_hex
-    ; 
+    
 .load_root:
     mov si,stage2_found_msg
     call print_str
+    mov dx,[data_region]
+    call print_hex
+    mov dx,[es:di+0x1A]
+    call print_hex
     jmp end
 .stage2_not_found:
     mov si,stage2_not_found_msg
@@ -122,7 +119,6 @@ end:
 ; ARGS:
 ;  SI points to 16 byte memory address/variable
 ;============================
-;
 read_disk_lba:
     push si
     push ax
@@ -138,6 +134,8 @@ read_disk_lba:
 
 root_segment: equ 0x0500
 root_offset: equ 0x0000
+stage2_load_segment: equ 0x7e00
+stage2_load_offset: equ 0x0000
 
 disk_packet:
     .size db 0x10 ; Size of the struct.
@@ -149,11 +147,13 @@ disk_packet:
     .lba2 dw 0
     .lba3 dw 0
     .lba4 dw 0
-stage2_name: db "STAGE2  BIN", ; Spaces are important.
-stage2_found_msg: db "Found stage2",0
-stage2_not_found_msg: db "unable to find stage2",0
-floppy_not_supported_msg: db "Floppies not supported",0
-unable_to_read_disk_msg: db "Can't read disk",0
+
+data_region: dw 0x0000
+stage2_name: db "STAGE2  BIN", ; Spaces are important; 11 bytes name:|8 bytes|,extension:|3 bytes|
+stage2_found_msg: db "Found stage2",CLRF,0
+stage2_not_found_msg: db "unable to find stage2",CLRF,0
+floppy_not_supported_msg: db "Floppies not supported",CLRF,0
+unable_to_read_disk_msg: db "Can't read disk",CLRF,0
 %include "print.s"
 times 510-($-$$) db 0
 db 0x55
