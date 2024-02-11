@@ -1,21 +1,27 @@
 bits 16
-
 extern bmain
 
 section .text
 init_sys:
-    xor ax,ax
-    mov es,ax
+    mov ax,0x7e00
     mov ds,ax
-    mov bx,0x8000
+    mov es,ax
     cli 
+    mov bx,0x8000
     mov ss,bx
     mov sp,0
     mov bp,bx
     sti
+    mov ah,0xe
+    mov al,'A'
+    int 0x10
     mov si,msg
     call print_str
+    jmp $
     call enable_a20
+
+
+
 check_a20_gate:
     call check_a20
     cmp ax,1
@@ -103,7 +109,7 @@ protected_mode:
     mov es,ax
     mov ss,ax
     mov esp,0x9000
-    call bmain
+    ;call bmain
     jmp $
 
 section .data
@@ -134,4 +140,3 @@ toc: ;; Table of content
 	dd gdt_start 					 ; 4 byte pointer.
 
 %include "../common/print.s"
-;%include "gdt.asm.inc"

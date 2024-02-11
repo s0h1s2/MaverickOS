@@ -9,4 +9,5 @@ SECTIONS {
                 *(.data);
                 *(.rodata*);
         }
+
 }
