@@ -3,13 +3,12 @@ extern bmain
 
 section .text
 init_sys:
-    mov ax,0x7e00
+    xor ax,ax
     mov ds,ax
     mov es,ax
     cli 
     mov bx,0x8000
     mov ss,bx
-    mov sp,0
     mov bp,bx
     sti
     mov ah,0xe
@@ -112,7 +111,7 @@ protected_mode:
     ;call bmain
     jmp $
 
-section .data
+section .data:
 msg db "Stage 2 Loaded",0xA,0xD,0
 a20_enabled_msg db "A20 enabled",0xA,0xD,0
 gdt_start:

@@ -113,12 +113,67 @@ start:
         loop .search_loop
     jmp stage2_not_found
 .load_fat:
-   xor dx,dx
-   mov dx,[es:di+26]
-   call print_hex
+    ; Store first cluter from root dir entry.
+    mov dx,[es:di+26]
+    mov word [cluster],dx
+    ; Calculate fat sectors
+    mov ax,word [bpb_sectors_per_fat]
+    mul byte [bpb_fat_count]
+    
+    mov word [disk_packet.sector_to_read],ax
+    ; Offset 
+    mov ax,[bpb_reserve_sector]
+    mov word [disk_packet.lower_lba],ax
+    mov word [disk_packet.offset],FAT_OFFSET
+    mov word [disk_packet.segment],FAT_SEGMENT
+    call read_disk
+
+    mov bx,STAGE2_LOAD_OFFSET
+    mov ax,FAT_SEGMENT
+    mov es,ax
+    mov di,FAT_OFFSET
+
+
 .load_cluster:
+   
+   mov ax,word [cluster]
+   call cluster_to_lba
+   movzx dx,[bpb_secs_per_cluster]
+   mov word [disk_packet.sector_to_read],dx
+   mov word [disk_packet.lower_lba],ax
+   mov word [disk_packet.offset],bx
+   mov word [disk_packet.segment],STAGE2_LOAD_SEGMENT
+   call read_disk
+   ; TODO: i think this is might be wrong it should be bytes_per_sector* sectors_per_cluster. Maybe refactor that later on
+   add bx,[bpb_bytes_per_sector]
+   ; Compute next cluster.
+   mov ax,word [cluster]
+   mov cx,3
+   mul cx
+   mov cx,2
+   div cx
+   mov di,FAT_OFFSET
+   add di,ax
+   mov ax,word [es:di]
+
+   or dx,dx
+
+   jnz .odd_cluster
+
+.even_cluster:
+    and ax,0x0FFF
+    jmp .done
+.odd_cluster:
+    shr ax,0x4
+.done: 
+    cmp ax,0x0FF8
+    jae .jump_stage2
+    mov word [cluster],ax
+    jmp .load_cluster
+
 .jump_stage2:
-    ;jmp STAGE2_LOAD_SEGMENT:STAGE2_LOAD_OFFSET
+    
+    jmp STAGE2_LOAD_SEGMENT:STAGE2_LOAD_OFFSET
     jmp end
 
 read_disk:
@@ -132,7 +187,16 @@ read_disk:
    pop dx
    pop ax
    ret
-
+; AX cotanin cluster number.
+cluster_to_lba:
+    push cx
+    sub ax,0x2
+    xor cx,cx
+    mov cl, byte[bpb_secs_per_cluster]
+    mul cx
+    add ax,word [data_region_start],
+    pop cx
+    ret
 stage2_not_found:
     mov si,floppy_not_supported_msg
     call print_str
