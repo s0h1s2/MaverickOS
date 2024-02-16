@@ -7,8 +7,7 @@ ROOT_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 BUILD_DIR:=$(ROOT_DIR)/build/
 
 run: mavrick
-	virtualboxvm --startvm Mavrick
-
+	qemu-system-i386 -hda mavrick.img
 prebuild:
 	mkdir -p $(BUILD_DIR)
 mavrick: prebuild stage1 stage2
@@ -20,7 +19,7 @@ mavrick: prebuild stage1 stage2
 stage1:
 	$(MAKE) -C $(SRC_DIR)/bootloader/stage1 BUILD_DIR="$(BUILD_DIR)"
 stage2:
-	$(MAKE) -C $(SRC_DIR)/bootloader/stage2 BUILD_DIR="$(BUILD_DIR)"
+	$(MAKE) -C $(SRC_DIR)/bootloader/stage1.5 BUILD_DIR="$(BUILD_DIR)"
 
 
 .PHONY: clean

@@ -1,24 +1,30 @@
 bits 16
 extern bmain
 
-section .text
+section .text.boot
 init_sys:
-    xor ax,ax
+    cli 
+    mov ax,0x7e00
     mov ds,ax
     mov es,ax
-    cli 
-    mov bx,0x8000
-    mov ss,bx
-    mov bp,bx
+    mov ax,0x9000
+    mov ss,ax
     sti
-    mov ah,0xe
-    mov al,'A'
-    int 0x10
-    mov si,msg
-    call print_str
+    call bmain
     jmp $
-    call enable_a20
-
+print_string:
+  pusha
+  xor ax,ax
+  mov ah,0x0e
+.char_loop:
+   lodsb ; mov al,[si]
+   cmp al,0
+   je .end
+   int 0x10
+   jmp .char_loop
+.end:
+   popa
+   ret
 
 
 check_a20_gate:
@@ -108,7 +114,7 @@ protected_mode:
     mov es,ax
     mov ss,ax
     mov esp,0x9000
-    ;call bmain
+    call bmain
     jmp $
 
 section .data:
@@ -138,4 +144,3 @@ toc: ;; Table of content
 	dw gdt_end-gdt_start-1 ; GDT table size in this case is 3*8=24-1 bytes.
 	dd gdt_start 					 ; 4 byte pointer.
 
-%include "../common/print.s"

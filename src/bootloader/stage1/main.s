@@ -1,5 +1,6 @@
 %define CLRF 0xA,0xD
-%define DEBUG 1
+; DEBUG enable print_hex function defination.
+%define DEBUG 0
 ; Future idea:
 ; I think i can assign values to macros then use them in BPB below.
 ; %define x 512
@@ -19,8 +20,8 @@
 %define FAT_SEGMENT         0x0500
 %define FAT_OFFSET          0x0000
 
-%define STAGE2_LOAD_SEGMENT 0x7e00
-%define STAGE2_LOAD_OFFSET  0x0000
+%define STAGE2_LOAD_SEGMENT 0x0000
+%define STAGE2_LOAD_OFFSET  0x7e00
 
 
 [BITS 16]
@@ -135,7 +136,6 @@ start:
 
 
 .load_cluster:
-   
    mov ax,word [cluster]
    call cluster_to_lba
    movzx dx,[bpb_secs_per_cluster]
@@ -172,7 +172,10 @@ start:
     jmp .load_cluster
 
 .jump_stage2:
-    
+    mov dl,[drive_number]
+    mov ax, STAGE2_LOAD_SEGMENT         ; set segment registers
+    mov ds, ax
+    mov es, ax
     jmp STAGE2_LOAD_SEGMENT:STAGE2_LOAD_OFFSET
     jmp end
 
