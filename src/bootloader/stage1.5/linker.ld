@@ -6,7 +6,14 @@ SECTIONS {
       *(.boot);
       *(.text);
     }
+
     .data : {
       *(.data);
+    }
+    .tdata : {
+      *(.tdata);
+    }
+    .bss : {
+        *(.bss);
     }
 }

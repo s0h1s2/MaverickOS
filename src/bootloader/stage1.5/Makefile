@@ -1,9 +1,9 @@
 ASM:=nasm
-ASM_FLAGS+=-f elf32
+ASM_FLAGS:=-f elf32
 LINKER:=ld 
-LINKER_FLAGS+=-m elf_i386 -nostdlib -T linker.ld
-CC:=dmd
-CCFLAGS+=-m32 -betterC -c 
+LINKER_FLAGS:=-m elf_i386 -nostdlib -T linker.ld 
+CC:=ldc2
+CCFLAGS:=-mtriple=i386-pc-none-elf -c --betterC --O1
 SRCS := $(shell find . -name '*.d' -or -name '*.s')
 OBJS:=$(SRCS:%=$(BUILD_DIR)/%.o)
 
