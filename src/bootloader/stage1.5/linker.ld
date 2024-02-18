@@ -11,7 +11,7 @@ SECTIONS {
       *(.data);
     }
     .tdata : {
-      *(.tdata);
+      KEEP(*(.tdata));
     }
     .bss : {
         *(.bss);
