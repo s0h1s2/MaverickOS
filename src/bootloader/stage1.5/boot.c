@@ -1,11 +1,7 @@
 #include "include/print.h"
 void boot_main() {
-  putc('H');
-  putc('e');
-  putc('l');
-  putc('l');
-  putc('o');
-// puts(hello);
+  puts("Hello,world!");
+  putc('O');
 loop:
   goto loop;
 }

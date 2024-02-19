@@ -10,9 +10,7 @@ SECTIONS {
     .data : {
       *(.data);
     }
-    .tdata : {
-      KEEP(*(.tdata));
-    }
+
     .bss : {
         *(.bss);
     }
