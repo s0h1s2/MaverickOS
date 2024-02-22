@@ -3,7 +3,7 @@ void boot_main() {
   // bputs("Hello,world!");
   // bputc('O');
   // detect_memory();
-  bprintf("Hello,%c", 'A', 'B', 'A', 'B', 'C');
+  bprintf("Hello,%c,%x", 'A', 0x1234);
 loop:
   goto loop;
 }
