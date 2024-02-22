@@ -8,9 +8,7 @@ init_system:
 	xor  ax, ax
 	mov  ds, ax
 	mov  es, ax
-	mov  gs, ax
-	mov  fs, ax
-	mov  ax, 0x9000
+	mov  ax, 0x8000
 	mov  ss, ax
 	sti
 	mov  si, msg
@@ -53,6 +51,7 @@ protected_mode:
 	mov  eax, 0x10; Data segment
 	mov  ds, eax
 	mov  es, eax
+	mov  ss, eax
 	mov  fs, eax
 	mov  gs, eax
 	call boot_main

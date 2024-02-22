@@ -1,9 +1,9 @@
 ASM:=nasm
 ASM_FLAGS:=-f elf32
-LINKER:=ld 
-LINKER_FLAGS:=-m elf_i386 -nostdlib -T linker.ld 
-CC:=clang-15
-CCFLAGS:=-c -Wall -Wextra --target=i386-pc-none-elf -ffreestanding -nostdlib -c -I include/ -mno-red-zone -fno-builtin 
+LINKER:=i686-elf-ld 
+LINKER_FLAGS:=-m elf_i386 -nostdlib -T linker.ld -Map $(BUILD_DIR)/kernel.map
+CC:=i686-elf-gcc
+CCFLAGS:=-m32 -g -O0 -std=c99  -fno-stack-protector -c -Wall -Wextra -mgeneral-regs-only  -ffreestanding -nostdlib -c -I include/ 
 SRCS := $(shell find . -name '*.c' -or -name '*.s')
 OBJS:=$(SRCS:%=$(BUILD_DIR)/%.o)
 
