@@ -1,10 +1,9 @@
 GLOBAL clear_screen
-
 section .text
 %macro enter_real_mode 0
 	cli
-	mov eax,0x20
 
+	mov eax,0x20
 	mov ds,eax
 	mov es,eax
 	mov ss,eax
@@ -30,33 +29,38 @@ section .text
 	lidt [idt_real]
 	sti
 %endmacro
-; %macro enter_protected_mode 0
-; 	cli
-; 	mov    eax, cr0
-; 	or     eax, 1
-; 	mov    cr0, eax
-;
-; 	jmp    0x8:.pmode ; 32-bit code segment in GDT table.
-;
-; .pmode:
-; 	[bits 32]
-; 	mov   eax, 0x16   ; setup 32-bit data segment in GDT table.
-; 	mov   es, eax
-; 	mov   ds, eax
-; 	mov   ss, eax
-; 	mov   fs, eax
-; 	mov   gs, eax
-;
-; %endmacro
+%macro enter_protected_mode 0
+	cli
+	mov    eax, cr0
+	or     eax, 1
+	mov    cr0, eax
+
+	jmp    0x8:.pmode ; 32-bit code segment in GDT table.
+
+.pmode:
+  [bits 32]
+	mov  eax, 0x10; Data segment
+	mov  ds, eax
+	mov  es, eax
+	mov  ss, eax
+	mov  fs, eax
+	mov  gs, eax
+	
+%endmacro
 
 clear_screen:
+	push ebp
+	mov ebp,esp
+
 	enter_real_mode
-	mov ah,0x0
-	mov al,0x0
+	mov ah,0xE
+	mov al,'A'
 	int 0x10
-	;enter_protected_mode
-	jmp $;
-	;ret
+	enter_protected_mode
+
+	mov esp,ebp
+	pop ebp
+	ret
 
 section .data
 idt_real:
