@@ -14,6 +14,7 @@ print_str:
 ;;  HEX_OUT: 0x0000
 ;;  Want to print:0x1234
 ;;  
+%if DEBUG
 print_hex:
   pusha       ;; Push all register content into stack.
   mov cx,4    ;; Start from right to left in output and use cx as index
@@ -38,5 +39,5 @@ print_hex:
   popa
   ret
 
-HEX_OUT db '0x0000',0
-
+HEX_OUT db '0x0000',0xD,0xA,0
+%endif

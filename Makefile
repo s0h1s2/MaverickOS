@@ -2,24 +2,24 @@
 
 TARGET_EXEC=os.bin
 SRC_DIR=./src/
-
+OUTPUT_NAME:= mavrick.img
 ROOT_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 BUILD_DIR:=$(ROOT_DIR)/build/
 
 run: mavrick
-	virtualboxvm --startvm Mavrick
-
+	qemu-system-i386 -hda mavrick.img
 prebuild:
 	mkdir -p $(BUILD_DIR)
 mavrick: prebuild stage1 stage2
-	dd if=/dev/zero of=disk.img bs=1024 count=1440
-	dd if=$(BUILD_DIR)/bootloader.bin of=disk.img conv=notrunc
-	dd if=$(BUILD_DIR)/stage2.bin of=disk.img conv=notrunc bs=512 seek=1 conv=notrunc
-
+	dd if=/dev/zero of=$(OUTPUT_NAME) bs=512 count=2879
+	mkfs.vfat -F12 $(OUTPUT_NAME)
+	dd if=$(BUILD_DIR)/bootloader.bin of=$(OUTPUT_NAME) conv=notrunc
+	mcopy -n -i $(OUTPUT_NAME) $(BUILD_DIR)/stage2.bin "::Stage2.bin" 
+	
 stage1:
 	$(MAKE) -C $(SRC_DIR)/bootloader/stage1 BUILD_DIR="$(BUILD_DIR)"
 stage2:
-	$(MAKE) -C $(SRC_DIR)/bootloader/stage2 BUILD_DIR="$(BUILD_DIR)"
+	$(MAKE) -C $(SRC_DIR)/bootloader/stage1.5 BUILD_DIR="$(BUILD_DIR)"
 
 
 .PHONY: clean

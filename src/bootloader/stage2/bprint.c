@@ -1,8 +1,14 @@
 #include "include/bprint.h"
-
-void putc(char c){
-  volatile char *buffer=(volatile char *)0xB8000;
+volatile char *buffer=(volatile char *)0xB8000;
+void bputc(char c,Color color){
   *buffer++=c;
-  *buffer++=15;
+  *buffer++=color;
+}
+
+void bprints(char *str){
+  while (*str!='\0') {
+    bputc(*str,GRAY);
+    str++;
+  }
 }
 
