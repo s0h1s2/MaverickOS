@@ -19,7 +19,7 @@ mavrick: prebuild stage1 stage2
 stage1:
 	$(MAKE) -C $(SRC_DIR)/bootloader/stage1 BUILD_DIR="$(BUILD_DIR)"
 stage2:
-	$(MAKE) -C $(SRC_DIR)/bootloader/stage1.5 BUILD_DIR="$(BUILD_DIR)"
+	$(MAKE) -C $(SRC_DIR)/bootloader/stage2 BUILD_DIR="$(BUILD_DIR)"
 
 
 .PHONY: clean

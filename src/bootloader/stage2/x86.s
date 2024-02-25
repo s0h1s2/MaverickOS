@@ -1,146 +1,68 @@
-bits 16
-extern bmain
+GLOBAL clear_screen
+section .text
+%macro enter_real_mode 0
+	cli
 
-section .text.boot
-init_sys:
-    cli 
-    mov ax,0x7e00
-    mov ds,ax
-    mov es,ax
-    mov ax,0x9000
-    mov ss,ax
-    sti
-    call bmain
-    jmp $
-print_string:
-  pusha
-  xor ax,ax
-  mov ah,0x0e
-.char_loop:
-   lodsb ; mov al,[si]
-   cmp al,0
-   je .end
-   int 0x10
-   jmp .char_loop
-.end:
-   popa
-   ret
+	mov eax,0x20
+	mov ds,eax
+	mov es,eax
+	mov ss,eax
+	mov fs,eax
+	mov gs,eax
 
+	jmp 0x18:.prmode
+.prmode:
+	[bits 32]
+	mov eax, cr0
+	mov eax,0
+	mov cr0, eax
 
-check_a20_gate:
-    call check_a20
-    cmp ax,1
-    jne end
-    call install_gdt
-    mov eax,cr0
-    or eax,1
-    mov cr0,eax
-    jmp 0x8:protected_mode
+	jmp 0:.rmode
 
-end:
-    jmp $
-;===========================================================
-; Check if A20 gate enabled by checking memory wrap around.
-; By testing whether they refer to same position.
-; When ax=1 A20 gate is enabled
-; When ax=0 A20 gate is disabled
-;===========================================================
-check_a20:
-    pushf 
-    push ds
-    push es
-    push di
-    push si
+.rmode:
+	[bits 16]
+	mov ax,0
+	mov ds,ax
+	mov es,ax
+	mov ss,ax
+	mov sp,0x8000
+	lidt [idt_real]
+	sti
+%endmacro
+%macro enter_protected_mode 0
+	cli
+	mov    eax, cr0
+	or     eax, 1
+	mov    cr0, eax
 
-    cli
+	jmp    0x8:.pmode ; 32-bit code segment in GDT table.
 
-    xor ax,ax ; ax=0x0000
-    mov es,ax
+.pmode:
+  [bits 32]
+	mov  eax, 0x10; Data segment
+	mov  ds, eax
+	mov  es, eax
+	mov  ss, eax
+	mov  fs, eax
+	mov  gs, eax
+	
+%endmacro
 
-    not ax ; ax=0xFFFF
-    mov ds,ax
+clear_screen:
+	push ebp
+	mov ebp,esp
 
-    mov di,0x0500 ; [ES:DI]
-    mov si,0x0510 ; [DS:SI]
+	enter_real_mode
+	mov ah,0xE
+	mov al,'A'
+	int 0x10
+	enter_protected_mode
 
-    mov al,byte [es:di]
-    push ax
-    mov al,byte [ds:si]
-    push ax
-    
-    mov byte [es:di],0x00
-    mov byte [ds:si],0xFF
+	mov esp,ebp
+	pop ebp
+	ret
 
-    cmp byte [es:di],0xFF
-
-    pop ax
-    mov [ds:si],al
-
-    pop ax
-    mov [es:di],al
-    
-    mov ax,0
-    je .exit
-    mov ax,1
-
-.exit:
-    pop si
-    pop di
-    pop es
-    pop ds
-    popf 
-    ret
-
-;Fast a20 gate method.
-enable_a20:
-   push ax
-   in al,0x92
-   or al,2
-   out 0x92,al
-   pop ax
-   ret
-
-install_gdt:
-    pusha
-    cli
-    lgdt [toc]
-    popa
-    ret
-
-[bits 32]
-protected_mode:
-    mov ax,0x10 ; 0x10 becuase of data semgment in GDT is second entry
-    mov ds,ax
-    mov es,ax
-    mov ss,ax
-    mov esp,0x9000
-    call bmain
-    jmp $
-
-section .data:
-msg db "Stage 2 Loaded",0xA,0xD,0
-a20_enabled_msg db "A20 enabled",0xA,0xD,0
-gdt_start:
-;; null descriptor
+section .data
+idt_real:
+	dw 0x3ff
 	dd 0
-	dd 0
-;; code descriptor
-	dw 0xFFFF ;Base limit 
-	dw 0
-	db 0
-	db 10011010b 			; access
-	db 11001111b 			; granularity
-	db 0
-
-;; data descriptor
-	dw 0xFFFF
-	dw 0x0
-	db 0
-	db 10010010b
-	db 11001111b
-	db 0
-gdt_end:
-toc: ;; Table of content
-	dw gdt_end-gdt_start-1 ; GDT table size in this case is 3*8=24-1 bytes.
-	dd gdt_start 					 ; 4 byte pointer.
-

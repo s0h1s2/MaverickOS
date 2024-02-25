@@ -1,24 +1,11 @@
-#include "include/bprint.h"
-#pragma clang diagnostic ignored "-Wincompatible-library-redeclaration"
-typedef unsigned long u64;
-typedef unsigned int u32;
-typedef unsigned short u16;
-typedef unsigned char u8;
-typedef u32 size_t;
+#include "include/framebuffer.h"
+#include "include/print.h"
+void boot_main() {
 
-
-void *memset(void *s, int c, size_t n) {
-    u8 *p = (u8 *)s;
-
-    for (size_t i = 0; i < n; i++) {
-        p[i] = (u8)c;
-    }
-
-    return s;
-}
-
-void bmain(){
-    bputc('a',1);
+  write_char('A', BLACK, WHITE);
+  clear_screen();
+  write_char('R', BLACK, WHITE);
+// bprintf("Hello,%c,%x", 'A', 0x1234);
 loop:
   goto loop;
 }
