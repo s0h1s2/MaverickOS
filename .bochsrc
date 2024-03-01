@@ -1,0 +1,4 @@
+ata0-master: type=disk, path="mavrick.img"
+boot: disk
+display_library: sdl2
+
